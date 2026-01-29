@@ -8,14 +8,14 @@ const {
   getMineById,
   calculateMineEmission
 } = require("../controllers/mineController");
-
+const { protect } = require("../middleware/authMiddleware");
 const router = express.Router();
 
-router.post("/", createMine);
-router.get("/", getAllMines);
-router.get("/mine/:mineId", getMineById);
-router.post("/:mineId/calculate", calculateMineEmission);
-router.get("/:corpId", getMinesByCorp);
-router.delete("/:id", deleteMine);
+router.post("/", protect, createMine);
+router.get("/", protect, getAllMines); // admin-style (later restrict)
+router.get("/mine/:mineId", protect, getMineById);
+router.post("/:mineId/calculate", protect, calculateMineEmission);
+router.get("/:corpId", protect, getMinesByCorp);
+router.delete("/:id", protect, deleteMine);
 
 module.exports = router;
