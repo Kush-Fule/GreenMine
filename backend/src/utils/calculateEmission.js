@@ -50,10 +50,17 @@ const calculateEmission = ({
 
   const finalCO2e = Number((adjustedEmission / 1000).toFixed(2)); // tons
 
-  return {
-    totalCO2e: finalCO2e,
-    emissionLevel: getEmissionLevel(finalCO2e),
-  };
+ return {
+  totalCO2e: finalCO2e,
+  emissionLevel: getEmissionLevel(finalCO2e),
+  breakdown: {
+    diesel: fuelEmission / 1000,
+    electricity: electricityEmission / 1000,
+    methane: methaneEmission / 1000,
+    transport: transportEmission / 1000,
+    explosives: explosivesEmission / 1000,
+  },
+};
 };
 
 module.exports = calculateEmission;
