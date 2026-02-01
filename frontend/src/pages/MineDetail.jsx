@@ -84,9 +84,15 @@ const MineDetail = () => {
 
         {/* Mine Info */}
         <div className="bg-white p-6 rounded shadow mb-6">
-          <p><strong>Location:</strong> {mine.location}</p>
-          <p><strong>Mine Type:</strong> {mine.mineType}</p>
-          <p><strong>Coal Type:</strong> {mine.coalType}</p>
+          <p>
+            <strong>Location:</strong> {mine.location}
+          </p>
+          <p>
+            <strong>Mine Type:</strong> {mine.mineType}
+          </p>
+          <p>
+            <strong>Coal Type:</strong> {mine.coalType}
+          </p>
           <p>
             <strong>Last Calculated:</strong>{" "}
             {mine.calculatedAt
@@ -105,9 +111,7 @@ const MineDetail = () => {
         {/* Source Breakdown Chart */}
         {breakdown && (
           <div className="bg-white p-6 rounded shadow mb-6">
-            <h2 className="font-semibold mb-4">
-              Emission Source Breakdown
-            </h2>
+            <h2 className="font-semibold mb-4">Emission Source Breakdown</h2>
             <MineSourceChart breakdown={breakdown} />
           </div>
         )}
@@ -121,16 +125,50 @@ const MineDetail = () => {
             Calculate Carbon Footprint
           </h2>
 
-          {error && (
-            <p className="col-span-2 text-red-600 text-sm">{error}</p>
-          )}
+          {error && <p className="col-span-2 text-red-600 text-sm">{error}</p>}
 
-          <input name="dieselLitres" placeholder="Diesel (litres)" onChange={handleChange} className="border px-3 py-2 rounded" required />
-          <input name="electricityKwh" placeholder="Electricity (kWh)" onChange={handleChange} className="border px-3 py-2 rounded" required />
-          <input name="methaneTons" placeholder="Methane (tons)" onChange={handleChange} className="border px-3 py-2 rounded" required />
-          <input name="coalExtractedTons" placeholder="Coal Extracted (tons)" onChange={handleChange} className="border px-3 py-2 rounded" required />
-          <input name="transportDistanceKm" placeholder="Transport Distance (km)" onChange={handleChange} className="border px-3 py-2 rounded" required />
-          <input name="explosivesKg" placeholder="Explosives (kg)" onChange={handleChange} className="border px-3 py-2 rounded" required />
+          <input
+            name="dieselLitres"
+            placeholder="Diesel (litres)"
+            onChange={handleChange}
+            className="border px-3 py-2 rounded"
+            required
+          />
+          <input
+            name="electricityKwh"
+            placeholder="Electricity (kWh)"
+            onChange={handleChange}
+            className="border px-3 py-2 rounded"
+            required
+          />
+          <input
+            name="methaneTons"
+            placeholder="Methane (tons)"
+            onChange={handleChange}
+            className="border px-3 py-2 rounded"
+            required
+          />
+          <input
+            name="coalExtractedTons"
+            placeholder="Coal Extracted (tons)"
+            onChange={handleChange}
+            className="border px-3 py-2 rounded"
+            required
+          />
+          <input
+            name="transportDistanceKm"
+            placeholder="Transport Distance (km)"
+            onChange={handleChange}
+            className="border px-3 py-2 rounded"
+            required
+          />
+          <input
+            name="explosivesKg"
+            placeholder="Explosives (kg)"
+            onChange={handleChange}
+            className="border px-3 py-2 rounded"
+            required
+          />
 
           <select
             name="coalGrade"
@@ -150,6 +188,24 @@ const MineDetail = () => {
             {calculating ? "Calculating..." : "Calculate Footprint"}
           </button>
         </form>
+        <button
+          onClick={async () => {
+            const res = await api.post(`/mines/${mineId}/report`, form, {
+              responseType: "blob",
+            });
+
+            const blob = new Blob([res.data], { type: "application/pdf" });
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${mine.mineName}_carbon_report.pdf`;
+            a.click();
+          }}
+          className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          Download PDF Report
+        </button>
       </div>
     </div>
   );

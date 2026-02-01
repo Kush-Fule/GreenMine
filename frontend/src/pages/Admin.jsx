@@ -1,22 +1,22 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import api from "../api/axios";
+import AdminEmissionChart from "../components/AdminEmissionChart";
 
 const AdminDashboard = () => {
   const [corps, setCorps] = useState([]);
   const [loading, setLoading] = useState(true);
 
- const fetchCorporations = async () => {
-  try {
-    const res = await api.get("/admin/users");
-    setCorps(res.data.users); // ✅ correct key
-  } catch (err) {
-    console.error("Failed to load corporations", err);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  const fetchCorporations = async () => {
+    try {
+      const res = await api.get("/admin/users");
+      setCorps(res.data.users); // ✅ correct key
+    } catch (err) {
+      console.error("Failed to load corporations", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchCorporations();
@@ -46,6 +46,15 @@ const AdminDashboard = () => {
           <p>Loading...</p>
         ) : (
           <div className="bg-white rounded shadow overflow-x-auto">
+            {corps.length > 0 && (
+              <div className="bg-white p-6 rounded shadow mb-8">
+                <h2 className="text-lg font-semibold mb-4">
+                  Corporation-wise Total Emissions
+                </h2>
+                <AdminEmissionChart users={corps} />
+              </div>
+            )}
+
             <table className="w-full border-collapse">
               <thead className="bg-gray-200">
                 <tr>
@@ -61,16 +70,14 @@ const AdminDashboard = () => {
                   <tr key={corp._id} className="border-t">
                     <td className="p-3">{corp.companyName}</td>
                     <td className="p-3">{corp.email}</td>
-                    <td className="p-3 text-center">
-                      {corp.totalCO2e}
-                    </td>
+                    <td className="p-3 text-center">{corp.totalCO2e}</td>
                     <td
                       className={`p-3 text-center font-semibold ${
                         corp.emissionLevel === "Green"
                           ? "text-green-600"
                           : corp.emissionLevel === "Yellow"
-                          ? "text-yellow-500"
-                          : "text-red-600"
+                            ? "text-yellow-500"
+                            : "text-red-600"
                       }`}
                     >
                       {corp.emissionLevel}

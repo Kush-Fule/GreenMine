@@ -6,7 +6,8 @@ const {
   deleteMine,
   getAllMines,
   getMineById,
-  calculateMineEmission
+  calculateMineEmission,
+  downloadMineReport
 } = require("../controllers/mineController");
 const { protect } = require("../middleware/authMiddleware");
 const router = express.Router();
@@ -17,5 +18,7 @@ router.get("/mine/:mineId", protect, getMineById);
 router.post("/:mineId/calculate", protect, calculateMineEmission);
 router.get("/:corpId", protect, getMinesByCorp);
 router.delete("/:id", protect, deleteMine);
+router.post("/:mineId/report", downloadMineReport);
+
 
 module.exports = router;

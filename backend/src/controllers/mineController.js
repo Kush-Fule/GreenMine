@@ -1,3 +1,4 @@
+const generateCarbonReport = require("../utils/pdfGenerator");
 const Mine = require("../models/Mine");
 const calculateEmission = require("../utils/calculateEmission");
 const User = require("../models/User");
@@ -145,5 +146,40 @@ const calculateMineEmission = async (req, res) => {
   }
 };
 
+const downloadMineReport = async (req, res) => {
+  try {
+    const { mineId } = req.params;
+    const inputs = req.body;
 
-module.exports = { createMine, getMinesByCorp, deleteMine, getAllMines, getMineById, calculateMineEmission};
+    const mine = await Mine.findById(mineId);
+    if (!mine) return res.status(404).json({ message: "Mine not found" });
+
+    const company = await User.findById(mine.corpId);
+
+    const result = {
+      totalCO2e: mine.totalCO2e,
+      emissionLevel: mine.emissionLevel,
+    };
+
+    const doc = generateCarbonReport({
+      company,
+      mine,
+      inputs,
+      result,
+    });
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=${mine.mineName}_carbon_report.pdf`
+    );
+    res.setHeader("Content-Type", "application/pdf");
+
+    doc.pipe(res);
+    doc.end();
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+module.exports = { createMine, getMinesByCorp, deleteMine, getAllMines, getMineById, calculateMineEmission, downloadMineReport};
