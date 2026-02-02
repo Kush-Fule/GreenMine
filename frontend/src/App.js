@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 import Mines from "./pages/Mines";
 import MineDetail from "./pages/MineDetail";
+import Profile from "./pages/Profile"
 
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
         <Route path="/admin" element={<Admin />} />
         <Route path="/mines" element={<Mines />} />
         <Route path="/mines/:mineId" element={<MineDetail />} />
+        <Route path="/profile" element={<Profile />} />
 
 
       </Routes>

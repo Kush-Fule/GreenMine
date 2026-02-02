@@ -4,6 +4,7 @@ const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const mineRoutes = require("./routes/mineRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const userRoutes = require("./routes/userRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const app = express();
 
@@ -16,7 +17,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/mines", mineRoutes);
 app.use("/api/analytics", analyticsRoutes);
-
+app.use("/api/users", userRoutes);
 // health check
 app.get("/", (req, res) => {
   res.send("GreenMine API is running");

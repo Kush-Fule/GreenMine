@@ -37,15 +37,7 @@ const MineEmissionChart = ({ mines }) => {
     ],
   };
 
-  const doughnutData = {
-    labels,
-    datasets: [
-      {
-        label: "Emission Share",
-        data: values,
-      },
-    ],
-  };
+ 
 
   const lineData = {
     labels,
@@ -66,12 +58,7 @@ const MineEmissionChart = ({ mines }) => {
         <Bar data={barData} />
       </div>
 
-      {/* Doughnut Chart */}
-      <div>
-        <h3 className="font-semibold mb-2">Emission Distribution</h3>
-        <Doughnut data={doughnutData} />
-      </div>
-
+    
       {/* Line Chart */}
       <div className="md:col-span-2">
         <h3 className="font-semibold mb-2">Emission Comparison Trend</h3>

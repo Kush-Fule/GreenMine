@@ -1,26 +1,33 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
-import MineSourceChart from "../components/MineSourceChart";
 import api from "../api/axios";
 
 const MineDetail = () => {
   const { mineId } = useParams();
 
   const [mine, setMine] = useState(null);
-  const [breakdown, setBreakdown] = useState(null);
   const [loading, setLoading] = useState(true);
   const [calculating, setCalculating] = useState(false);
   const [error, setError] = useState("");
 
   const [form, setForm] = useState({
-    dieselLitres: "",
-    electricityKwh: "",
-    methaneTons: "",
-    coalExtractedTons: "",
-    transportDistanceKm: "",
-    explosivesKg: "",
-    coalGrade: "Medium",
+    scope1: {
+      methane: {
+        airFlowRate: "",
+        ch4Concentration: "",
+        operatingHours: "",
+      },
+      combustion: {
+        dieselLitres: "",
+        stationaryFuel: "",
+        explosivesKg: "",
+      },
+    },
+    scope2: {
+      gridElectricity: "",
+      renewableOffset: "",
+    },
   });
 
   const fetchMine = async () => {
@@ -38,8 +45,17 @@ const MineDetail = () => {
     fetchMine();
   }, [mineId]);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (scope, section, field, value) => {
+    setForm((prev) => ({
+      ...prev,
+      [scope]: {
+        ...prev[scope],
+        [section]: {
+          ...prev[scope][section],
+          [field]: value,
+        },
+      },
+    }));
   };
 
   const handleCalculate = async (e) => {
@@ -49,17 +65,23 @@ const MineDetail = () => {
 
     try {
       const res = await api.post(`/mines/${mineId}/calculate`, {
-        dieselLitres: Number(form.dieselLitres),
-        electricityKwh: Number(form.electricityKwh),
-        methaneTons: Number(form.methaneTons),
-        coalExtractedTons: Number(form.coalExtractedTons),
-        transportDistanceKm: Number(form.transportDistanceKm),
-        explosivesKg: Number(form.explosivesKg),
-        coalGrade: form.coalGrade,
+        scope1: {
+          methane: {
+            airFlowRate: Number(form.scope1.methane.airFlowRate),
+            ch4Concentration: Number(form.scope1.methane.ch4Concentration),
+            operatingHours: Number(form.scope1.methane.operatingHours),
+          },
+          combustion: {
+            dieselLitres: Number(form.scope1.combustion.dieselLitres),
+            stationaryFuel: Number(form.scope1.combustion.stationaryFuel),
+            explosivesKg: Number(form.scope1.combustion.explosivesKg),
+          },
+        },
+        scope2: {
+          gridElectricity: Number(form.scope2.gridElectricity),
+          renewableOffset: Number(form.scope2.renewableOffset),
+        },
       });
-
-      // capture breakdown for chart
-      setBreakdown(res.data.mineEmission.breakdown);
 
       // refresh mine data
       fetchMine();
@@ -108,86 +130,223 @@ const MineDetail = () => {
           <p>Emission Level: {mine.emissionLevel}</p>
         </div>
 
-        {/* Source Breakdown Chart */}
-        {breakdown && (
-          <div className="bg-white p-6 rounded shadow mb-6">
-            <h2 className="font-semibold mb-4">Emission Source Breakdown</h2>
-            <MineSourceChart breakdown={breakdown} />
-          </div>
-        )}
-
         {/* Calculation Form */}
         <form
           onSubmit={handleCalculate}
           className="bg-white p-6 rounded shadow grid grid-cols-2 gap-4"
         >
-          <h2 className="col-span-2 font-semibold mb-2">
-            Calculate Carbon Footprint
+          <h2 className="col-span-2 font-semibold">
+            Scope 1 – Fugitive Methane
           </h2>
 
-          {error && <p className="col-span-2 text-red-600 text-sm">{error}</p>}
-
           <input
-            name="dieselLitres"
-            placeholder="Diesel (litres)"
-            onChange={handleChange}
-            className="border px-3 py-2 rounded"
-            required
-          />
-          <input
-            name="electricityKwh"
-            placeholder="Electricity (kWh)"
-            onChange={handleChange}
-            className="border px-3 py-2 rounded"
-            required
-          />
-          <input
-            name="methaneTons"
-            placeholder="Methane (tons)"
-            onChange={handleChange}
-            className="border px-3 py-2 rounded"
-            required
-          />
-          <input
-            name="coalExtractedTons"
-            placeholder="Coal Extracted (tons)"
-            onChange={handleChange}
-            className="border px-3 py-2 rounded"
-            required
-          />
-          <input
-            name="transportDistanceKm"
-            placeholder="Transport Distance (km)"
-            onChange={handleChange}
-            className="border px-3 py-2 rounded"
-            required
-          />
-          <input
-            name="explosivesKg"
-            placeholder="Explosives (kg)"
-            onChange={handleChange}
+            placeholder="Air Flow Rate (m³/s)"
+            onChange={(e) =>
+              handleChange("scope1", "methane", "airFlowRate", e.target.value)
+            }
             className="border px-3 py-2 rounded"
             required
           />
 
-          <select
-            name="coalGrade"
-            onChange={handleChange}
-            className="border px-3 py-2 rounded col-span-2"
-          >
-            <option>Low</option>
-            <option>Medium</option>
-            <option>High</option>
-          </select>
+          <input
+            placeholder="CH₄ Concentration (%)"
+            onChange={(e) =>
+              handleChange(
+                "scope1",
+                "methane",
+                "ch4Concentration",
+                e.target.value,
+              )
+            }
+            className="border px-3 py-2 rounded"
+            required
+          />
+
+          <input
+            placeholder="Operating Hours"
+            onChange={(e) =>
+              handleChange(
+                "scope1",
+                "methane",
+                "operatingHours",
+                e.target.value,
+              )
+            }
+            className="border px-3 py-2 rounded"
+            required
+          />
+
+          <h2 className="col-span-2 font-semibold mt-4">
+            Scope 1 – Combustion & Chemicals
+          </h2>
+
+          <input
+            placeholder="Diesel Used (litres)"
+            onChange={(e) =>
+              handleChange(
+                "scope1",
+                "combustion",
+                "dieselLitres",
+                e.target.value,
+              )
+            }
+            className="border px-3 py-2 rounded"
+            required
+          />
+
+          <input
+            placeholder="Stationary Fuel (litres)"
+            onChange={(e) =>
+              handleChange(
+                "scope1",
+                "combustion",
+                "stationaryFuel",
+                e.target.value,
+              )
+            }
+            className="border px-3 py-2 rounded"
+            required
+          />
+
+          <input
+            placeholder="Explosives Used (kg)"
+            onChange={(e) =>
+              handleChange(
+                "scope1",
+                "combustion",
+                "explosivesKg",
+                e.target.value,
+              )
+            }
+            className="border px-3 py-2 rounded"
+            required
+          />
+
+          <h2 className="col-span-2 font-semibold mt-4">
+            Scope 2 – Purchased Electricity
+          </h2>
+
+          <input
+            placeholder="Grid Electricity (kWh)"
+            onChange={(e) =>
+              handleChange("scope2", null, "gridElectricity", e.target.value)
+            }
+            className="border px-3 py-2 rounded"
+            required
+          />
+
+          <input
+            placeholder="Renewable Offset (kWh)"
+            onChange={(e) =>
+              handleChange("scope2", null, "renewableOffset", e.target.value)
+            }
+            className="border px-3 py-2 rounded"
+          />
+<h2 className="col-span-2 font-semibold mt-6 text-gray-700">
+  Operational & Environmental Metadata (Reference Only)
+</h2>
+
+<p className="col-span-2 text-xs text-gray-500 mb-2">
+  The following parameters are collected for regulatory reference and future
+  analytical integration. These values do not affect the current emission
+  calculation.
+</p>
+<input
+  placeholder="ROM Coal Production (tonnes / month)"
+  className="border px-3 py-2 rounded"
+/>
+
+<input
+  placeholder="Overburden / Waste Removed (m³)"
+  className="border px-3 py-2 rounded"
+/>
+
+<input
+  placeholder="Average Seam Thickness (meters)"
+  className="border px-3 py-2 rounded"
+/>
+
+<input
+  placeholder="Strip Ratio"
+  className="border px-3 py-2 rounded"
+/>
+<input
+  placeholder="Average Ambient Temperature (°C)"
+  className="border px-3 py-2 rounded"
+/>
+
+<input
+  placeholder="Average Wind Speed (m/s)"
+  className="border px-3 py-2 rounded"
+/>
+
+<input
+  placeholder="Annual Rainfall (mm)"
+  className="border px-3 py-2 rounded"
+/>
+
+<select className="border px-3 py-2 rounded">
+  <option>Dust Suppression Method</option>
+  <option>Water Sprinkling</option>
+  <option>Fog Cannons</option>
+  <option>Chemical Binding</option>
+</select>
+<input
+  placeholder="Land Area Disturbed (hectares)"
+  className="border px-3 py-2 rounded"
+/>
+
+<input
+  placeholder="Land Area Reclaimed (hectares)"
+  className="border px-3 py-2 rounded"
+/>
+
+<select className="border px-3 py-2 rounded">
+  <option>Vegetation Type (Pre-clearing)</option>
+  <option>Forest</option>
+  <option>Grassland</option>
+  <option>Agricultural</option>
+</select>
+
+<select className="border px-3 py-2 rounded">
+  <option>Reclamation Status</option>
+  <option>Planned</option>
+  <option>Ongoing</option>
+  <option>Completed</option>
+</select>
+<input
+  placeholder="Mine License / Lease Number"
+  className="border px-3 py-2 rounded"
+/>
+
+<input
+  placeholder="Reporting Period (e.g., Jan–Mar 2026)"
+  className="border px-3 py-2 rounded"
+/>
+
+<select className="border px-3 py-2 rounded">
+  <option>Monitoring Frequency</option>
+  <option>Daily</option>
+  <option>Weekly</option>
+  <option>Monthly</option>
+</select>
+
+<select className="border px-3 py-2 rounded">
+  <option>Data Verification Status</option>
+  <option>Self-Reported</option>
+  <option>Internally Audited</option>
+  <option>Third-Party Verified</option>
+</select>
 
           <button
             type="submit"
             disabled={calculating}
-            className="col-span-2 bg-green-700 text-white py-2 rounded hover:bg-green-800"
+            className="col-span-2 mt-4 bg-green-700 text-white py-2 rounded hover:bg-green-800"
           >
-            {calculating ? "Calculating..." : "Calculate Footprint"}
+            {calculating ? "Calculating..." : "Calculate Carbon Footprint"}
           </button>
         </form>
+
         <button
           onClick={async () => {
             const res = await api.post(`/mines/${mineId}/report`, form, {

@@ -35,6 +35,7 @@ const mineSchema = new mongoose.Schema(
       default: 0,
     },
 
+    
     emissionLevel: {
       type: String,
       enum: ["Green", "Yellow", "Red"],

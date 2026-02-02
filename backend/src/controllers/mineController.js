@@ -1,7 +1,12 @@
 const generateCarbonReport = require("../utils/pdfGenerator");
 const Mine = require("../models/Mine");
-const calculateEmission = require("../utils/calculateEmission");
 const User = require("../models/User");
+const scope1Methane = require("../utils/scope1Methane");
+const scope1Combustion = require("../utils/scope1Combustion");
+const scope2Electricity = require("../utils/scope2Electricity");
+const aggregateEmissions = require("../utils/aggregateEmissions");
+const EmissionCalculation = require("../models/EmissionCalculation");
+
 // Add new mine
 const createMine = async (req, res) => {
   try {
@@ -11,7 +16,13 @@ const createMine = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const mine = await Mine.create({ corpId, mineName, location, mineType, coalType });
+    const mine = await Mine.create({
+      corpId,
+      mineName,
+      location,
+      mineType,
+      coalType,
+    });
 
     res.status(201).json({ success: true, mine });
   } catch (error) {
@@ -41,7 +52,9 @@ const deleteMine = async (req, res) => {
 
     await mine.deleteOne();
 
-    res.status(200).json({ success: true, message: "Mine deleted successfully" });
+    res
+      .status(200)
+      .json({ success: true, message: "Mine deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -50,7 +63,10 @@ const deleteMine = async (req, res) => {
 // Admin: Get all mines
 const getAllMines = async (req, res) => {
   try {
-    const mines = await Mine.find().populate("corpId", "companyName email location");
+    const mines = await Mine.find().populate(
+      "corpId",
+      "companyName email location",
+    );
     res.status(200).json(mines);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -60,7 +76,10 @@ const getAllMines = async (req, res) => {
 // Get individual mine by ID
 const getMineById = async (req, res) => {
   try {
-    const mine = await Mine.findById(req.params.mineId).populate("corpId", "companyName email location");
+    const mine = await Mine.findById(req.params.mineId).populate(
+      "corpId",
+      "companyName email location",
+    );
 
     if (!mine) return res.status(404).json({ message: "Mine not found" });
 
@@ -74,76 +93,65 @@ const getMineById = async (req, res) => {
 const calculateMineEmission = async (req, res) => {
   try {
     const { mineId } = req.params;
+    const { scope1, scope2 } = req.body;
 
     const mine = await Mine.findById(mineId);
     if (!mine) return res.status(404).json({ message: "Mine not found" });
 
-    const {
-      dieselLitres,
-      electricityKwh,
-      methaneTons,
-      coalExtractedTons,
-      transportDistanceKm,
-      explosivesKg,
-      coalGrade,
-    } = req.body;
+    const results = [
+      scope1Methane(scope1.methane),
+      scope1Combustion(scope1.combustion),
+      scope2Electricity(scope2),
+    ];
 
-    if (
-      dieselLitres == null ||
-      electricityKwh == null ||
-      methaneTons == null ||
-      coalExtractedTons == null ||
-      transportDistanceKm == null ||
-      explosivesKg == null ||
-      !coalGrade
-    ) {
-      return res.status(400).json({ message: "All calculation fields required" });
-    }
+    const aggregated = aggregateEmissions(results);
 
-    const result = calculateEmission({
-      dieselLitres,
-      electricityKwh,
-      methaneTons,
-      coalExtractedTons,
-      transportDistanceKm,
-      explosivesKg,
-      mineType: mine.mineType,
-      coalGrade,
-    });
+    const round = (n) => Number(n.toFixed(3));
+    mine.scope1CO2e = round(aggregated.scope1CO2e);
+    mine.scope2CO2e = round(aggregated.scope2CO2e);
+    mine.totalCO2e = round(aggregated.totalCO2e);
 
-    // Update mine
-    mine.totalCO2e = result.totalCO2e;
-    mine.emissionLevel = result.emissionLevel;
+    mine.emissionLevel =
+      aggregated.totalCO2e < 1000
+        ? "Green"
+        : aggregated.totalCO2e <= 5000
+          ? "Yellow"
+          : "Red";
     mine.calculatedAt = new Date();
     await mine.save();
-
-    // Update corporation total
     const mines = await Mine.find({ corpId: mine.corpId });
-    const totalCorpEmission = mines.reduce(
-      (sum, m) => sum + (m.totalCO2e || 0),
-      0
+
+    const totalCorpEmission = round(
+      mines.reduce((sum, m) => sum + (m.totalCO2e || 0), 0),
     );
 
+    // Determine corp emission level
     const corpEmissionLevel =
       totalCorpEmission < 5000
         ? "Green"
         : totalCorpEmission <= 20000
-        ? "Yellow"
-        : "Red";
+          ? "Yellow"
+          : "Red";
 
+    // Update user
     await User.findByIdAndUpdate(mine.corpId, {
       totalCO2e: totalCorpEmission,
       emissionLevel: corpEmissionLevel,
     });
 
-    res.status(200).json({
-      success: true,
-      mineEmission: result,
-      corpTotalEmission: totalCorpEmission,
+    await EmissionCalculation.create({
+      mineId: mine._id,
+      corpId: mine.corpId,
+      ...aggregated,
+      inputSnapshot: req.body,
+      emissionLevel: mine.emissionLevel,
     });
+
+    res.status(200).json({ success: true, ...aggregated });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+  
 };
 
 const downloadMineReport = async (req, res) => {
@@ -170,7 +178,7 @@ const downloadMineReport = async (req, res) => {
 
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename=${mine.mineName}_carbon_report.pdf`
+      `attachment; filename=${mine.mineName}_carbon_report.pdf`,
     );
     res.setHeader("Content-Type", "application/pdf");
 
@@ -181,5 +189,12 @@ const downloadMineReport = async (req, res) => {
   }
 };
 
-
-module.exports = { createMine, getMinesByCorp, deleteMine, getAllMines, getMineById, calculateMineEmission, downloadMineReport};
+module.exports = {
+  createMine,
+  getMinesByCorp,
+  deleteMine,
+  getAllMines,
+  getMineById,
+  calculateMineEmission,
+  downloadMineReport,
+};

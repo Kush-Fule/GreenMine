@@ -6,8 +6,8 @@ const Sidebar = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();              // clears token + user
-    navigate("/login");    // forces route change
+    logout();
+    navigate("/login");
   };
 
   return (
@@ -29,6 +29,13 @@ const Sidebar = () => {
               className="block text-left w-full hover:text-green-400"
             >
               Mines
+            </button>
+
+            <button
+              onClick={() => navigate("/profile")}
+              className="block text-left w-full hover:text-green-400"
+            >
+              Profile
             </button>
           </>
         )}
