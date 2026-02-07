@@ -48,6 +48,9 @@ const Sidebar = () => {
             Admin Dashboard
           </button>
         )}
+        {user?.role === "admin" && (
+          <button onClick={() => navigate("/admin/reports")}>Reports</button>
+        )}
 
         <button
           onClick={handleLogout}

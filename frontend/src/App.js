@@ -7,7 +7,7 @@ import Admin from "./pages/Admin";
 import Mines from "./pages/Mines";
 import MineDetail from "./pages/MineDetail";
 import Profile from "./pages/Profile"
-
+import AdminReports from "./pages/AdminReports";
 
 function App() {
   return (
@@ -21,6 +21,7 @@ function App() {
         <Route path="/mines" element={<Mines />} />
         <Route path="/mines/:mineId" element={<MineDetail />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/admin/reports" element={<AdminReports />} />
 
 
       </Routes>

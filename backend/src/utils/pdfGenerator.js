@@ -1,58 +1,50 @@
 const PDFDocument = require("pdfkit");
 
-const generateCarbonReport = ({
-  company,
-  mine,
-  inputs,
-  result,
-}) => {
+module.exports = ({ company, mine, result, inputs }) => {
   const doc = new PDFDocument({ margin: 50 });
 
-  // Title
-  doc.fontSize(20).text("Carbon Footprint Report", { align: "center" });
-  doc.moveDown();
-
-  // Company Info
-  doc.fontSize(14).text("Company Information");
-  doc.moveDown(0.5);
-  doc.fontSize(12)
-    .text(`Company: ${company.companyName}`)
-    .text(`Registration ID: ${company.registrationId}`)
-    .text(`Location: ${company.location || "N/A"}`);
-  doc.moveDown();
-
-  // Mine Info
-  doc.fontSize(14).text("Mine Information");
-  doc.moveDown(0.5);
-  doc.fontSize(12)
-    .text(`Mine Name: ${mine.mineName}`)
-    .text(`Mine Type: ${mine.mineType}`)
-    .text(`Coal Type: ${mine.coalType}`)
-    .text(`Location: ${mine.location}`);
-  doc.moveDown();
-
-  // Inputs
-  doc.fontSize(14).text("Calculation Inputs");
-  doc.moveDown(0.5);
-  Object.entries(inputs).forEach(([key, value]) => {
-    doc.fontSize(12).text(`${key}: ${value}`);
+  doc.fontSize(20).text("Carbon Footprint Assessment Report", {
+    align: "center",
   });
+  doc.moveDown(2);
+
+  doc.fontSize(12);
+  doc.text(`Company: ${company.companyName}`);
+  doc.text(`Mine: ${mine.mineName}`);
+  doc.text(`Location: ${mine.location}`);
+  doc.text(`Generated On: ${new Date().toLocaleString()}`);
+  doc.moveDown(2);
+
+  doc.fontSize(14).text("1. Executive Summary", { underline: true });
+  doc.moveDown();
+  doc.fontSize(11).text(
+    `Total emissions: ${result.totalCO2e} tons CO₂e. 
+Emission Level: ${result.emissionLevel}.`
+  );
+  doc.moveDown(2);
+
+  doc.fontSize(14).text("2. Scope 1 – Methane Emissions", { underline: true });
+  doc.moveDown();
+  doc.text(`Air Flow Rate: ${inputs.scope1.methane.airFlowRate}`);
+  doc.text(`CH₄ Concentration: ${inputs.scope1.methane.ch4Concentration}`);
+  doc.text(`Operating Hours: ${inputs.scope1.methane.operatingHours}`);
   doc.moveDown();
 
-  // Results
-  doc.fontSize(14).text("Emission Results");
-  doc.moveDown(0.5);
-  doc.fontSize(12)
-    .text(`Total CO₂e: ${result.totalCO2e} tons`)
-    .text(`Emission Level: ${result.emissionLevel}`);
+  doc.fontSize(14).text("3. Scope 1 – Combustion", { underline: true });
+  doc.moveDown();
+  doc.text(`Diesel Used: ${inputs.scope1.combustion.dieselLitres}`);
+  doc.text(`Explosives Used: ${inputs.scope1.combustion.explosivesKg}`);
+  doc.moveDown();
 
+  doc.fontSize(14).text("4. Scope 2 – Electricity", { underline: true });
+  doc.moveDown();
+  doc.text(`Grid Electricity: ${inputs.scope2.gridElectricity}`);
+  doc.text(`Renewable Offset: ${inputs.scope2.renewableOffset}`);
   doc.moveDown(2);
-  doc.fontSize(10).text(
-    `Generated on: ${new Date().toLocaleString()}`,
-    { align: "right" }
+
+  doc.fontSize(9).text(
+    "This report follows GHG Protocol and IPCC guidelines."
   );
 
   return doc;
 };
-
-module.exports = generateCarbonReport;

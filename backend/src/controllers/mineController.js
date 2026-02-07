@@ -6,7 +6,7 @@ const scope1Combustion = require("../utils/scope1Combustion");
 const scope2Electricity = require("../utils/scope2Electricity");
 const aggregateEmissions = require("../utils/aggregateEmissions");
 const EmissionCalculation = require("../models/EmissionCalculation");
-
+const EmissionReport = require("../models/EmissionReport");
 // Add new mine
 const createMine = async (req, res) => {
   try {
@@ -157,7 +157,7 @@ const calculateMineEmission = async (req, res) => {
 const downloadMineReport = async (req, res) => {
   try {
     const { mineId } = req.params;
-    const inputs = req.body;
+    const inputs = req.body; // all form data
 
     const mine = await Mine.findById(mineId);
     if (!mine) return res.status(404).json({ message: "Mine not found" });
@@ -169,16 +169,25 @@ const downloadMineReport = async (req, res) => {
       emissionLevel: mine.emissionLevel,
     };
 
+    // ✅ STORE REPORT DATA
+    await EmissionReport.create({
+      corpId: company._id,
+      mineId: mine._id,
+      inputSnapshot: inputs,
+      totalCO2e: mine.totalCO2e,
+      emissionLevel: mine.emissionLevel,
+    });
+
     const doc = generateCarbonReport({
       company,
       mine,
-      inputs,
       result,
+      inputs,
     });
 
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename=${mine.mineName}_carbon_report.pdf`,
+      `attachment; filename=${mine.mineName}_carbon_report.pdf`
     );
     res.setHeader("Content-Type", "application/pdf");
 
