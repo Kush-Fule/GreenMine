@@ -21,21 +21,79 @@ const EmissionLevelChart = ({ mines }) => {
     labels: ["Green", "Yellow", "Red"],
     datasets: [
       {
-        data: [
-          levels.Green,
-          levels.Yellow,
-          levels.Red,
-        ],
+        data: [levels.Green, levels.Yellow, levels.Red],
         backgroundColor: [
-          "#16a34a",
-          "#eab308",
-          "#dc2626",
+          "rgba(16, 185, 129, 0.8)",
+          "rgba(251, 191, 36, 0.8)",
+          "rgba(239, 68, 68, 0.8)",
         ],
+        borderColor: [
+          "rgba(16, 185, 129, 1)",
+          "rgba(251, 191, 36, 1)",
+          "rgba(239, 68, 68, 1)",
+        ],
+        borderWidth: 2,
+        hoverOffset: 8,
       },
     ],
   };
 
-  return <Doughnut data={data} />;
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "bottom",
+        labels: {
+          color: "#374151",
+          font: {
+            family: "'Poppins', sans-serif",
+            size: 13,
+            weight: 500,
+          },
+          padding: 15,
+          usePointStyle: true,
+          pointStyle: "circle",
+        },
+      },
+      tooltip: {
+        backgroundColor: "rgba(17, 24, 39, 0.95)",
+        titleColor: "#fff",
+        bodyColor: "#d1d5db",
+        padding: 12,
+        cornerRadius: 8,
+        titleFont: {
+          family: "'Poppins', sans-serif",
+          size: 14,
+          weight: 600,
+        },
+        bodyFont: {
+          family: "'Poppins', sans-serif",
+          size: 13,
+        },
+        callbacks: {
+          label: function (context) {
+            const label = context.label || "";
+            const value = context.parsed || 0;
+            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = ((value / total) * 100).toFixed(1);
+            return `${label}: ${value} mines (${percentage}%)`;
+          },
+        },
+      },
+    },
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+      <h3 className="text-xl font-semibold text-gray-800 mb-4 font-['Poppins']">
+        Emission Levels Distribution
+      </h3>
+      <div className="h-80 flex items-center justify-center">
+        <Doughnut data={data} options={options} />
+      </div>
+    </div>
+  );
 };
 
 export default EmissionLevelChart;
